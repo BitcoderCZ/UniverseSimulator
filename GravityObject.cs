@@ -93,7 +93,7 @@ namespace UniverseSimulator
                 trailPoints.RemoveAt(0);
 
             for (int i = 1; i < trailPoints.Count; i++)
-                Program.game.DrawTrail(trailPoints[i - 1], trailPoints[i], Universe.CLR_RED);
+                Program.game.DrawTrail(trailPoints[i - 1], trailPoints[i], Universe.CLR_SUPER_DARK_RED);
         }
     }
 }

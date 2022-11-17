@@ -52,7 +52,7 @@ namespace UniverseSimulator
                 new CelestialBody(new Vector2F(GameWindow.Buffer.Width / 2, GameWindow.Buffer.Height / 2), 50000000f, 60f, new Vector2F(0f, 0f), Color.Yellow, ui, 0),
             };
 
-            GenRandom(50);
+            GenRandom(20);
 
             GameWindow.Input.MouseDown += (object sender, IMouseEventArgs args) =>
             {
@@ -133,6 +133,8 @@ namespace UniverseSimulator
 
             HandleWindowDrag();
 
+            ParticleSystem.Update(delta);
+
             for (int i = 0; i < objects.Count; i++)
                 objects[i].UpdateVelocity(objects, delta);
 
@@ -172,6 +174,7 @@ namespace UniverseSimulator
 
                     if (hit == null) {
                         ui.RemoveElement(objects[i].infoTextId);
+                        CreateExplosion(objects[i].Pos, objects[i].Radius);
                         objects.RemoveAt(i);
                         continue;
                     }
@@ -179,12 +182,14 @@ namespace UniverseSimulator
                         float diff = (float)Math.Abs(hit.Mass - objects[i].Mass);
                         hit.velocity += objects[i].velocity / diff;
                         ui.RemoveElement(objects[i].infoTextId);
+                        CreateExplosion(objects[i].Pos, objects[i].Radius);
                         objects.RemoveAt(i);
                     }
                     else {
                         float diff = (float)Math.Abs(hit.Mass - objects[i].Mass);
                         objects[i].velocity += hit.velocity / diff;
                         ui.RemoveElement(hit.infoTextId);
+                        CreateExplosion(hit.Pos, hit.Radius);
                         objects.Remove(hit);
                     }
 
@@ -193,8 +198,10 @@ namespace UniverseSimulator
                 collision = false;
             }
 
-            if (ui.CaschedTextCount > 3000)
+            if (ui.CaschedTextCount > 5000)
                 ui.ClearCaschedText();
+
+            ParticleSystem.Render(GameWindow.Buffer);
 
             try {
                 ui.Draw();
@@ -266,6 +273,28 @@ namespace UniverseSimulator
             ui?.ClearCaschedText();
             base.Exit();
             Environment.Exit(0);
+        }
+
+        private static readonly int[] explosionColors = new int[]
+        {
+            Universe.CLR_RED,
+            Universe.CLR_ORANGE,
+            Universe.CLR_YELLOW,
+        };
+
+        private void CreateExplosion(Vector2F pos, float radius)
+        {
+            int ri = (int)radius;
+            int countParts = rng.Next(100 * ri, 360 * ri);
+            float step = 360f / (float)countParts;
+            for (float i = 0; i < countParts; i++) {
+                float angle = i * step;
+                float speed = (float)rng.NextDouble() * 5f * radius + 10f;
+                Vector2F velocity = new Vector2F((float)Math.Cos(angle), (float)Math.Sin(angle)) * speed;
+                float lifeTime = (float)rng.NextDouble() / 8f * radius + 1f;
+
+                ParticleSystem.Add(pos, velocity, lifeTime, explosionColors[rng.Next(0, 3)]);
+            }
         }
 
         public new void FillCircle(Vector2I pos, int radius, Color color)
